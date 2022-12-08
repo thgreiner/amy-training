@@ -1,0 +1,6 @@
+data
+/PGN
+.idea
+__pycache__
+stats.txt
+*.h5
