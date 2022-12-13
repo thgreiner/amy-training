@@ -15,142 +15,6 @@ WDL_WEIGHT = 0.1
 MLH_WEIGHT = 0.025
 
 
-def residual_block(input, dim, index, residual=True):
-
-    flow = keras.layers.Conv2D(
-        dim,
-        (3, 3),
-        padding="same",
-        name=f"residual-block-{index}-conv1",
-        kernel_regularizer=WEIGHT_REGULARIZER,
-        activation="linear",
-    )(input)
-
-    flow = keras.layers.BatchNormalization(
-        name=f"residual-block-{index}-bn1",
-        renorm=RENORM,
-    )(flow)
-
-    flow = keras.layers.Activation(
-        name=f"residual-block-{index}-activation1", activation=RECTIFIER
-    )(flow)
-
-    flow = keras.layers.Conv2D(
-        dim,
-        (3, 3),
-        padding="same",
-        name=f"residual-block-{index}-conv2",
-        kernel_regularizer=WEIGHT_REGULARIZER,
-        activation="linear",
-    )(flow)
-
-    flow = keras.layers.BatchNormalization(
-        name=f"residual-block-{index}-bn2",
-        renorm=RENORM,
-    )(flow)
-
-    flow = keras.layers.Activation(
-        name=f"residual-block-{index}-activation2", activation=RECTIFIER
-    )(flow)
-
-    if residual:
-        flow = keras.layers.add([flow, input], name=f"residual-block-{index}-add")
-
-    return flow
-
-
-def create_policy_head(input):
-    dim = input.shape.as_list()[-1]
-
-    flow = keras.layers.Conv2D(
-        dim,
-        (3, 3),
-        activation="linear",
-        name="pre-moves-conv",
-        kernel_regularizer=WEIGHT_REGULARIZER,
-        padding="same",
-    )(input)
-
-    flow = keras.layers.Activation(name="pre-moves-activation", activation=RECTIFIER)(
-        flow
-    )
-
-    flow = keras.layers.add([flow, input], name="pre-moves-conv-add")
-
-    flow = keras.layers.Conv2D(
-        73,
-        (3, 3),
-        activation="linear",
-        name="moves-conv",
-        kernel_regularizer=WEIGHT_REGULARIZER,
-        padding="same",
-    )(flow)
-
-    return keras.layers.Flatten(name="moves")(flow)
-
-
-def create_value_head(input):
-    flow = keras.layers.Conv2D(
-        32,
-        (1, 1),
-        padding="same",
-        name="pre-value-conv",
-        kernel_regularizer=WEIGHT_REGULARIZER,
-        activation=RECTIFIER,
-    )(input)
-
-    flow = keras.layers.Flatten(name="flatten-value")(flow)
-    flow = keras.layers.BatchNormalization(name="value-dense-bn", renorm=RENORM)(flow)
-
-    flow = keras.layers.Dense(
-        128,
-        name="value-dense",
-        kernel_regularizer=WEIGHT_REGULARIZER,
-        activation=RECTIFIER,
-    )(flow)
-
-    flow = keras.layers.BatchNormalization(name="value-bn", renorm=RENORM)(flow)
-
-    eval_head = keras.layers.Dense(
-        1, activation="tanh", kernel_regularizer=WEIGHT_REGULARIZER, name="value"
-    )(flow)
-
-    wdl_head = keras.layers.Dense(
-        3, activation="softmax", kernel_regularizer=WEIGHT_REGULARIZER, name="wdl"
-    )(flow)
-
-    return eval_head, wdl_head
-
-
-def create_moves_left_head(input):
-    flow = keras.layers.Conv2D(
-        8,
-        (1, 1),
-        padding="same",
-        name="pre-mlh-conv",
-        kernel_regularizer=WEIGHT_REGULARIZER,
-        activation=RECTIFIER,
-    )(input)
-
-    flow = keras.layers.Flatten(name="flatten-mlh")(flow)
-    flow = keras.layers.BatchNormalization(name="mlh-dense-bn", renorm=RENORM)(flow)
-
-    flow = keras.layers.Dense(
-        64,
-        name="mlh-dense",
-        kernel_regularizer=WEIGHT_REGULARIZER,
-        activation=RECTIFIER,
-    )(flow)
-
-    flow = keras.layers.BatchNormalization(name="mlh-bn", renorm=RENORM)(flow)
-
-    mlh_head = keras.layers.Dense(
-        1, activation=RECTIFIER, kernel_regularizer=WEIGHT_REGULARIZER, name="mlh"
-    )(flow)
-
-    return mlh_head
-
-
 def create_model():
     repr = Repr2D()
 
@@ -173,7 +37,7 @@ def create_model():
 
     for width, count in layers:
         for i in range(count):
-            flow = residual_block(flow, width, index, residual)
+            flow = _residual_block(flow, width, index, residual)
             index += 1
             residual = True
         residual = False
@@ -182,9 +46,9 @@ def create_model():
         name=f"residual-block-{index}-bn", renorm=RENORM
     )(flow)
 
-    move_output = create_policy_head(flow)
-    value_output, wdl_output = create_value_head(flow)
-    mlh_output = create_moves_left_head(flow)
+    move_output = _create_policy_head(flow)
+    value_output, wdl_output = _create_value_head(flow)
+    mlh_output = _create_moves_left_head(flow)
 
     return keras.Model(
         name="TFlite_{}".format(
@@ -233,11 +97,6 @@ def load_or_create_model(model_name):
             model_name,
         )
 
-    # model.summary()
-    # print()
-    # print(f'Model name is "{model.name}"')
-    # print()
-
     return model
 
 
@@ -257,3 +116,146 @@ def schedule_learn_rate(model, iteration, batch_no):
     learn_rate = 2e-2
     K.set_value(model.optimizer.lr, learn_rate)
     return learn_rate
+
+
+def _residual_block(input, dim, index, residual=True):
+    """Creates a residual block of the desired dimensionality.
+
+    Args:
+        input: the input tensor
+        dim: the number of internal planes
+        index: the index of the block, used to create proper layer names
+        residual: if True, a residual connection is created
+    """
+    flow = keras.layers.Conv2D(
+        dim,
+        (3, 3),
+        padding="same",
+        name=f"residual-block-{index}-conv1",
+        kernel_regularizer=WEIGHT_REGULARIZER,
+        activation="linear",
+    )(input)
+
+    flow = keras.layers.BatchNormalization(
+        name=f"residual-block-{index}-bn1",
+        renorm=RENORM,
+    )(flow)
+
+    flow = keras.layers.Activation(
+        name=f"residual-block-{index}-activation1", activation=RECTIFIER
+    )(flow)
+
+    flow = keras.layers.Conv2D(
+        dim,
+        (3, 3),
+        padding="same",
+        name=f"residual-block-{index}-conv2",
+        kernel_regularizer=WEIGHT_REGULARIZER,
+        activation="linear",
+    )(flow)
+
+    flow = keras.layers.BatchNormalization(
+        name=f"residual-block-{index}-bn2",
+        renorm=RENORM,
+    )(flow)
+
+    flow = keras.layers.Activation(
+        name=f"residual-block-{index}-activation2", activation=RECTIFIER
+    )(flow)
+
+    if residual:
+        flow = keras.layers.add([flow, input], name=f"residual-block-{index}-add")
+
+    return flow
+
+
+def _create_policy_head(input):
+    dim = input.shape.as_list()[-1]
+
+    flow = keras.layers.Conv2D(
+        dim,
+        (3, 3),
+        activation="linear",
+        name="pre-moves-conv",
+        kernel_regularizer=WEIGHT_REGULARIZER,
+        padding="same",
+    )(input)
+
+    flow = keras.layers.Activation(name="pre-moves-activation", activation=RECTIFIER)(
+        flow
+    )
+
+    flow = keras.layers.add([flow, input], name="pre-moves-conv-add")
+
+    flow = keras.layers.Conv2D(
+        73,
+        (3, 3),
+        activation="linear",
+        name="moves-conv",
+        kernel_regularizer=WEIGHT_REGULARIZER,
+        padding="same",
+    )(flow)
+
+    return keras.layers.Flatten(name="moves")(flow)
+
+
+def _create_value_head(input):
+    flow = keras.layers.Conv2D(
+        32,
+        (1, 1),
+        padding="same",
+        name="pre-value-conv",
+        kernel_regularizer=WEIGHT_REGULARIZER,
+        activation=RECTIFIER,
+    )(input)
+
+    flow = keras.layers.Flatten(name="flatten-value")(flow)
+    flow = keras.layers.BatchNormalization(name="value-dense-bn", renorm=RENORM)(flow)
+
+    flow = keras.layers.Dense(
+        128,
+        name="value-dense",
+        kernel_regularizer=WEIGHT_REGULARIZER,
+        activation=RECTIFIER,
+    )(flow)
+
+    flow = keras.layers.BatchNormalization(name="value-bn", renorm=RENORM)(flow)
+
+    eval_head = keras.layers.Dense(
+        1, activation="tanh", kernel_regularizer=WEIGHT_REGULARIZER, name="value"
+    )(flow)
+
+    wdl_head = keras.layers.Dense(
+        3, activation="softmax", kernel_regularizer=WEIGHT_REGULARIZER, name="wdl"
+    )(flow)
+
+    return eval_head, wdl_head
+
+
+def _create_moves_left_head(input):
+    flow = keras.layers.Conv2D(
+        8,
+        (1, 1),
+        padding="same",
+        name="pre-mlh-conv",
+        kernel_regularizer=WEIGHT_REGULARIZER,
+        activation=RECTIFIER,
+    )(input)
+
+    flow = keras.layers.Flatten(name="flatten-mlh")(flow)
+    flow = keras.layers.BatchNormalization(name="mlh-dense-bn", renorm=RENORM)(flow)
+
+    flow = keras.layers.Dense(
+        64,
+        name="mlh-dense",
+        kernel_regularizer=WEIGHT_REGULARIZER,
+        activation=RECTIFIER,
+    )(flow)
+
+    flow = keras.layers.BatchNormalization(name="mlh-bn", renorm=RENORM)(flow)
+
+    mlh_head = keras.layers.Dense(
+        1, activation=RECTIFIER, kernel_regularizer=WEIGHT_REGULARIZER, name="mlh"
+    )(flow)
+
+    return mlh_head

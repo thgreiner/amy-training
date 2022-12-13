@@ -1,4 +1,4 @@
-from typing import Tuple, Sequence
+from typing import Sequence, Tuple
 
 import chess
 from numpy import float32, int8, sum, zeros
