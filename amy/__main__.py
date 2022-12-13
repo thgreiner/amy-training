@@ -11,9 +11,7 @@ def cli():
 
 
 @click.command()
-@click.option(
-    "--file-name", type=str, help="Name of the PGN file to split", required=True
-)
+@click.argument("file_name")
 def pgn_split(file_name: str):
     """Split a PGN file into separate files by their date tag."""
     split_pgn_by_date(file_name)
@@ -35,7 +33,7 @@ def train(model_name: str, batch_size: int, test_mode: bool):
 @click.command()
 @click.option("--file-name", type=str, help="PGN input file", required=True)
 @click.option("--output-dir", type=str, help="Output directory", required=True)
-@click.option("--nfiles", type=int, help="Files to split into", default=100)
+@click.option("--nfiles", type=int, help="Files to split into", default=25)
 @click.option("--split", type=int, help="Training/validation split", default=10)
 def pgn_to_pickle(file_name: str, output_dir: str, nfiles: int, split: int):
     """Convert a PGN file to a pickle training file."""

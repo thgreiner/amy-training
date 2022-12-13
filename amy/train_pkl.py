@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-
+import lzma
 import pickle
 import time
 from functools import partial
@@ -66,7 +65,7 @@ def _read_pickle(queue, test_mode):
 
     for filename in files:
         print(f"Reading {filename}", end="\r")
-        with open(filename, "rb") as fin:
+        with lzma.open(filename, "rb") as fin:
             try:
                 while True:
                     item = pickle.load(fin)

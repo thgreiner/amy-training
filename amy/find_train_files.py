@@ -15,13 +15,13 @@ def find_train_files(position_count: int, sample_rate: int, test_mode: bool):
         A shuffled list of file names. Sampling positions from these files with the given
         sample rate will give approximately the desired position count.
     """
-    pfiles = glob.glob("data/*/position_count")
+    pos_count_files = glob.glob("data/*/position_count")
 
     total_count = 0
 
     data_files = []
 
-    for name in sorted(pfiles, reverse=True):
+    for name in sorted(pos_count_files, reverse=True):
         with open(name) as pfile:
             cnt = int(pfile.readline())
         total_count += cnt
@@ -30,9 +30,9 @@ def find_train_files(position_count: int, sample_rate: int, test_mode: bool):
         print(dir)
 
         if test_mode:
-            data_files.extend(glob.glob(os.path.join(dir, "validation.pkl")))
+            data_files.extend(glob.glob(os.path.join(dir, "validation.pkl.xz")))
         else:
-            data_files.extend(glob.glob(os.path.join(dir, "train-*.pkl")))
+            data_files.extend(glob.glob(os.path.join(dir, "train-*.pkl.xz")))
 
         if total_count * sample_rate / 100 > position_count:
             break

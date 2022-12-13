@@ -1,3 +1,4 @@
+import lzma
 import os
 import pickle
 import random
@@ -10,7 +11,7 @@ from amy.pgn.reader import pos_generator
 
 
 def convert_pgn_to_pickle(file_name: str, output_dir: str, nfiles: int, split: int):
-    """Convert a PGN file to a pickle training file."""
+    """Convert a PGN file to compressed pickle training data."""
     queue = PriorityQueue()
 
     pos_gen = partial(pos_generator, file_name, True, queue)
@@ -20,11 +21,13 @@ def convert_pgn_to_pickle(file_name: str, output_dir: str, nfiles: int, split: i
 
     if not path.exists(output_dir):
         os.mkdir(output_dir)
-    validation_file = open(path.join(output_dir, "validation.pkl"), "wb")
+    validation_file = lzma.open(path.join(output_dir, "validation.pkl.xz"), "wb")
 
     train_files = []
     for i in range(nfiles):
-        train_files.append(open(path.join(output_dir, f"train-{i:02d}.pkl"), "wb"))
+        train_files.append(
+            lzma.open(path.join(output_dir, f"train-{i:02d}.pkl.xz"), "wb")
+        )
 
     val_cnt = 0
     train_cnt = 0
