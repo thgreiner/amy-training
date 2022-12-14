@@ -12,7 +12,7 @@ from prometheus_client import start_http_server
 from amy.find_train_files import find_train_files
 from amy.network import load_or_create_model
 from amy.pgn.reader import end_of_input_item, randomize_item
-from amy.train_loop import train_epoch
+from amy.training.loop import train_epoch
 
 
 def train_from_pkl(model_name: str, batch_size: int, test_mode: bool):

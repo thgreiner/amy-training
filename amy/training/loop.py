@@ -5,7 +5,7 @@ from prometheus_client import Counter, Gauge
 
 from amy.chess.representation import Repr2D
 from amy.network import schedule_learn_rate
-from amy.train_stats import Stats
+from amy.training.stats import Stats
 
 pos_counter = Counter("training_position_total", "Positions seen by training")
 batch_no_counter = Counter("training_batch_total", "Training batches")

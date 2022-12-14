@@ -3,7 +3,7 @@ import click
 from amy.pgn.split import split_pgn_by_date
 from amy.pickle.converter import convert_pgn_to_pickle
 from amy.quantization.quantize import quantize_model
-from amy.train_pkl import train_from_pkl
+from amy.training.train_pkl import train_from_pkl
 
 
 @click.group()
