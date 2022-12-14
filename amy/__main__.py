@@ -2,6 +2,7 @@ import click
 
 from amy.pgn.split import split_pgn_by_date
 from amy.pickle.converter import convert_pgn_to_pickle
+from amy.quantization.quantize import quantize_model
 from amy.train_pkl import train_from_pkl
 
 
@@ -40,9 +41,17 @@ def pgn_to_pickle(file_name: str, output_dir: str, nfiles: int, split: int):
     convert_pgn_to_pickle(file_name, output_dir, nfiles, split)
 
 
+@click.command()
+@click.argument("file_name")
+def quantize(file_name: str) -> None:
+    """Quantize a Keras model."""
+    quantize_model(file_name)
+
+
 cli.add_command(pgn_to_pickle)
 cli.add_command(train)
 cli.add_command(pgn_split)
+cli.add_command(quantize)
 
 if __name__ == "__main__":
     cli()

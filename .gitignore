@@ -4,3 +4,4 @@ data
 __pycache__
 stats.txt
 *.h5
+*.tflite
