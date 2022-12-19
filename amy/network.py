@@ -115,7 +115,7 @@ def schedule_learn_rate(model, iteration, batch_no):
     #     1 + math.cos(t / 6 * math.pi)
     # )
 
-    learn_rate = 2e-2
+    learn_rate = 2e-4
     K.set_value(model.optimizer.lr, learn_rate)
     return learn_rate
 

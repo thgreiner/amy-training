@@ -19,16 +19,25 @@ def pgn_split(file_name: str):
 
 
 @click.command()
-@click.option(
-    "--model-name",
-    help="Model to train",
+@click.argument(
+    "model-name",
     default=None,
 )
 @click.option("--batch-size", help="Batch size", type=int, default=256)
-@click.option("--test-mode", help="Test mode", type=bool, default=False)
-def train(model_name: str, batch_size: int, test_mode: bool):
+def train(model_name: str, batch_size: int):
     """Train a model."""
-    train_from_pkl(model_name, batch_size, test_mode)
+    train_from_pkl(model_name, batch_size, False)
+
+
+@click.command()
+@click.argument(
+    "model-name",
+    default=None,
+)
+@click.option("--batch-size", help="Batch size", type=int, default=256)
+def validate(model_name: str, batch_size: int):
+    """Validate a model."""
+    train_from_pkl(model_name, batch_size, True)
 
 
 @click.command()
@@ -48,10 +57,11 @@ def quantize(file_name: str) -> None:
     quantize_model(file_name)
 
 
-cli.add_command(pgn_to_pickle)
-cli.add_command(train)
 cli.add_command(pgn_split)
+cli.add_command(pgn_to_pickle)
 cli.add_command(quantize)
+cli.add_command(train)
+cli.add_command(validate)
 
 if __name__ == "__main__":
     cli()
