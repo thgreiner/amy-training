@@ -60,8 +60,8 @@ def _start_pos_gen_thread(queue, test_mode):
 
 def _read_pickle(queue, test_mode):
 
-    sample = 10
-    files = find_train_files(600_000, 10, test_mode)
+    sample = 8
+    files = find_train_files(750_000, sample, test_mode)
 
     for filename in files:
         print(f"Reading {filename}", end="\r")

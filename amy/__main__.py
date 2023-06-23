@@ -19,10 +19,7 @@ def pgn_split(file_name: str):
 
 
 @click.command()
-@click.argument(
-    "model-name",
-    default=None,
-)
+@click.argument("model-name")
 @click.option("--batch-size", help="Batch size", type=int, default=256)
 def train(model_name: str, batch_size: int):
     """Train a model."""
@@ -30,10 +27,7 @@ def train(model_name: str, batch_size: int):
 
 
 @click.command()
-@click.argument(
-    "model-name",
-    default=None,
-)
+@click.argument("model-name")
 @click.option("--batch-size", help="Batch size", type=int, default=256)
 def validate(model_name: str, batch_size: int):
     """Validate a model."""
@@ -41,7 +35,7 @@ def validate(model_name: str, batch_size: int):
 
 
 @click.command()
-@click.option("--file-name", type=str, help="PGN input file", required=True)
+@click.argument("file-name")
 @click.option("--output-dir", type=str, help="Output directory", required=True)
 @click.option("--nfiles", type=int, help="Files to split into", default=25)
 @click.option("--split", type=int, help="Training/validation split", default=10)

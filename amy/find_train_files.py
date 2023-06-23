@@ -9,7 +9,7 @@ def find_train_files(position_count: int, sample_rate: int, test_mode: bool):
     Args:
         position_count: the desired position count
         sample_rate: the sample rate
-        test_mode: a flag indication whether the caller wants training or validation data
+        test_mode: a flag indicating whether the caller wants training or validation data
 
     Returns:
         A shuffled list of file names. Sampling positions from these files with the given
